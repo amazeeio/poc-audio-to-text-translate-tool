@@ -28,7 +28,7 @@ export const translateTextWithOllama = async (
 export const translateText = async (
   text: string,
   targetLanguage: string,
-  model: string = 'voxtral-mini'
+  model: string = 'chat'
 ): Promise<string> => {
   if (process.env.GATSBY_USE_LOCAL_OLLAMA === 'true') {
     console.log('Using local Ollama fallback for translation');

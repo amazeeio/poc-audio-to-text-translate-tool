@@ -5,6 +5,8 @@ interface TranslationResultProps {
   translation: string;
   isTranscribing: boolean;
   isTranslating: boolean;
+  transcribeModel: string;
+  translateModel: string;
 }
 
 export const TranslationResult: React.FC<TranslationResultProps> = ({
@@ -12,10 +14,12 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
   translation,
   isTranscribing,
   isTranslating,
+  transcribeModel,
+  translateModel,
 }) => {
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-6 grid grid-cols-2 gap-6">
       {/* Transcription Section */}
       <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-100">
         <div className="px-4 py-5 sm:px-6 bg-gray-50 border-b border-gray-200">
@@ -28,7 +32,7 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
               </svg>
             )}
           </h3>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">Transcribed via Voxtral LLM.</p>
+          <p className="mt-1 max-w-2xl text-sm text-gray-500">Transcribed via "{transcribeModel}" model.</p>
         </div>
         <div className="px-4 py-5 sm:p-6 text-gray-800 whitespace-pre-wrap min-h-[100px]">
           {isTranscribing ? (
@@ -54,7 +58,7 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
               </svg>
             )}
           </h3>
-          <p className="mt-1 max-w-2xl text-sm text-indigo-500">Target language text result.</p>
+          <p className="mt-1 max-w-2xl text-sm text-indigo-500">Target language text result via "{translateModel}" model.</p>
         </div>
         <div className="px-4 py-5 sm:p-6 text-gray-800 whitespace-pre-wrap min-h-[100px]">
           {isTranslating ? (

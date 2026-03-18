@@ -3,7 +3,7 @@ import { transcribeAudioWithOllama } from './localOllamaService';
 export const transcribeAudio = async (
   file: File,
   sourceLanguage: string,
-  model: string = 'voxtral-mini',
+  model: string = 'gpt-4o-transcribe',
   responseFormat: string = 'json'
 ): Promise<string> => {
   if (process.env.GATSBY_USE_LOCAL_OLLAMA === 'true') {
