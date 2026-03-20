@@ -31,7 +31,7 @@ GATSBY_LITELLM_API_KEY="<your-litellm-api-key>"
 
 2. Start the development server:
    ```shell
-   pnpm run dev
+   pnpm run develop
    ```
 
 3. Open the application in your browser (typically `http://localhost:8000`).
