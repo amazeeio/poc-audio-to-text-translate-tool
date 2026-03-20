@@ -128,7 +128,7 @@ const IndexPage = () => {
                   onChange={(e) => setTranscribeModel(e.target.value)}
                 >
                   <option value="gpt-4o-transcribe">gpt-4o-transcribe</option>
-                  <option disabled value="voxtral-mini">voxtral-mini [Not Available]</option>
+                  <option value="voxtral-mini-2602">voxtral-mini-2602</option>
                   <option disabled value="voxtral-small">voxtral-small [Not Available]</option>
                 </select>
               </div>
