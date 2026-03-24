@@ -1,6 +1,6 @@
 export const transcribeAudioWithOllama = async (
   file: File,
-  model: string = 'karanchopda333/whisper'
+  model: string = 'gpt-4o-transcribe'
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

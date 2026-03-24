@@ -5,7 +5,7 @@ import { FileUpload } from '../components/FileUpload';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { TranslationResult } from '../components/TranslationResult';
 import { transcribeAudio } from '../services/llmService';
-import { translateText } from '../services/translateService';
+import { translateText, formatTextAsSubtitles } from '../services/translateService';
 
 const languageOptions = [
   { code: 'ar', name: 'Arabic (العربية)' },
@@ -51,13 +51,20 @@ const IndexPage = () => {
     try {
       // Step 1: Transcribe Audio
       setIsTranscribing(true);
-      const transcribedText = await transcribeAudio(file, sourceLang, transcribeModel, responseFormat);
+      let transcribedText = await transcribeAudio(file, sourceLang, transcribeModel, responseFormat);
+      
+      // Step 1.1: If srt/vtt was requested but the model returned plain text,
+      // use the chat model to "format" it into SRT/VTT for consistency.
+      if ((responseFormat === 'srt' || responseFormat === 'vtt') && !transcribedText.includes('-->')) {
+        transcribedText = await formatTextAsSubtitles(transcribedText, responseFormat, chatModel);
+      }
+      
       setTranscription(transcribedText);
       setIsTranscribing(false);
 
       // Step 2: Translate Text
       setIsTranslating(true);
-      const translatedText = await translateText(transcribedText, targetLang, chatModel);
+      const translatedText = await translateText(transcribedText, targetLang, chatModel, responseFormat);
       setTranslation(translatedText);
       setIsTranslating(false);
 
@@ -104,12 +111,14 @@ const IndexPage = () => {
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <LanguageSelector
+                id="source-language"
                 label="Source Language"
                 value={sourceLang}
                 onChange={setSourceLang}
                 options={languageOptions}
               />
               <LanguageSelector
+                id="target-language"
                 label="Target Language in Text"
                 value={targetLang}
                 onChange={setTargetLang}
@@ -119,10 +128,11 @@ const IndexPage = () => {
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="flex flex-col">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="transcribe-model" className="block text-sm font-medium text-gray-700 mb-1">
                   Transcribe Model
                 </label>
                 <select
+                  id="transcribe-model"
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border text-gray-900"
                   value={transcribeModel}
                   onChange={(e) => setTranscribeModel(e.target.value)}
@@ -134,10 +144,11 @@ const IndexPage = () => {
               </div>
 
               <div className="flex flex-col">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="chat-model" className="block text-sm font-medium text-gray-700 mb-1">
                   Chat Model
                 </label>
                 <select
+                  id="chat-model"
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border text-gray-900"
                   value={chatModel}
                   onChange={(e) => setChatModel(e.target.value)}
@@ -148,20 +159,35 @@ const IndexPage = () => {
               </div>
 
               <div className="flex flex-col">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="response-format" className="block text-sm font-medium text-gray-700 mb-1">
                   Response Format
                 </label>
                 <select
+                  id="response-format"
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border text-gray-900"
                   value={responseFormat}
                   onChange={(e) => setResponseFormat(e.target.value)}
                 >
                   <option value="json">json</option>
                   <option value="text">text</option>
-                  <option disabled value="srt">srt [Not Available]</option>
-                  <option disabled value="verbose_json">verbose_json [Not Available]</option>
-                  <option disabled value="vtt">vtt [Not Available]</option>
+                  <option value="srt">srt</option>
+                  <option value="verbose_json">verbose_json</option>
+                  <option value="vtt">vtt</option>
                 </select>
+                {transcribeModel === 'gpt-4o-transcribe' && ['srt', 'vtt', 'verbose_json'].includes(responseFormat) && (
+                  <p 
+                    className="mt-4 text-xs text-amber-900 bg-amber-100 p-3 rounded-md border border-amber-200 shadow-sm leading-relaxed"
+                    style={{ marginTop: '1.5rem' }}
+                  >
+                    <span className="font-bold flex items-center gap-1 mb-1">
+                      <svg className="h-3.5 w-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      Compatibility Note
+                    </span>
+                    The "{responseFormat}" format may not be fully supported by <strong>{transcribeModel}</strong>. If transcription fails or returns unexpected results, please try "json" or "text" instead.
+                  </p>
+                )}
               </div>
             </div>
 

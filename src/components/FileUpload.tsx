@@ -42,7 +42,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect }) => {
 
   return (
     <div className="w-full mb-6">
-      <label className="block text-sm font-medium text-gray-700 mb-2">Upload Audio File</label>
+      <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 mb-2">Upload Audio File</label>
       <div
         className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg transition-colors duration-200 ${
           isDragging ? 'border-primary bg-indigo-50' : 'border-gray-300 hover:border-gray-400'

@@ -1,5 +1,34 @@
 import { transcribeAudioWithOllama } from './localOllamaService';
 
+const formatTime = (seconds: number, type: 'srt' | 'vtt'): string => {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  const ms = Math.floor((seconds % 1) * 1000);
+  
+  const hDisplay = h.toString().padStart(2, '0');
+  const mDisplay = m.toString().padStart(2, '0');
+  const sDisplay = s.toString().padStart(2, '0');
+  const msDisplay = ms.toString().padStart(3, '0');
+  
+  if (type === 'srt') {
+    return `${hDisplay}:${mDisplay}:${sDisplay},${msDisplay}`;
+  }
+  return `${hDisplay}:${mDisplay}:${sDisplay}.${msDisplay}`;
+};
+
+const segmentsToSRT = (segments: any[]): string => {
+  return segments.map((seg, i) => {
+    return `${i + 1}\n${formatTime(seg.start, 'srt')} --> ${formatTime(seg.end, 'srt')}\n${seg.text.trim()}\n`;
+  }).join('\n');
+};
+
+const segmentsToVTT = (segments: any[]): string => {
+  return 'WEBVTT\n\n' + segments.map((seg) => {
+    return `${formatTime(seg.start, 'vtt')} --> ${formatTime(seg.end, 'vtt')}\n${seg.text.trim()}\n`;
+  }).join('\n');
+};
+
 export const transcribeAudio = async (
   file: File,
   sourceLanguage: string,
@@ -19,16 +48,20 @@ export const transcribeAudio = async (
   const formData = new FormData();
   formData.append('file', file);
   formData.append('model', model);
-  formData.append('response_format', responseFormat);
+  
+  // If user wants srt/vtt, we request verbose_json to ensure we get timings
+  // then we convert it ourselves if the provider doesn't return raw srt/vtt.
+  const requestedFormat = responseFormat;
+  const apiResponseFormat = (requestedFormat === 'srt' || requestedFormat === 'vtt') 
+    ? 'verbose_json' 
+    : requestedFormat;
+    
+  formData.append('response_format', apiResponseFormat);
 
-  // Note: LiteLLM's whispers API typically doesn't strictly adhere to ISO code as input for all
-  // providers, but we can pass `language` if the underlying API supports it.
   if (sourceLanguage) {
     formData.append('language', sourceLanguage);
   }
 
-  // Use relative URL to leverage Gatsby development proxy and bypass CORS
-  // Note: the path MUST start with /v1 to match the proxy prefix in gatsby-config.js
   const response = await fetch('/v1/audio/transcriptions', {
     method: 'POST',
     headers: {
@@ -41,30 +74,45 @@ export const transcribeAudio = async (
     const errorText = await response.text();
     console.error('LiteLLM Transcription Error:', errorText);
 
-    // Attempt to extract a clean message if it's JSON, otherwise display the whole string
     let errorMessage = errorText;
     try {
       const parsed = JSON.parse(errorText);
       if (parsed.error && parsed.error.message) {
         errorMessage = parsed.error.message;
       }
-    } catch (e) {
-      // Ignore parse errors, just fallback to raw text
-    }
+    } catch (e) {}
 
     throw new Error(`Status ${response.status}: ${errorMessage}`);
   }
 
   const rawText = await response.text();
 
-  // Try parsing as JSON to format it cleanly if it's json/verbose_json
   try {
     const data = JSON.parse(rawText);
-    // Return full JSON so the user can see structure like usage etc.
+
+    if (requestedFormat === 'json' || requestedFormat === 'verbose_json') {
+      return JSON.stringify(data, null, 2);
+    }
+
+    // Handle segments to SRT/VTT conversion if we have them
+    if (data.segments && Array.isArray(data.segments)) {
+      if (requestedFormat === 'srt') return segmentsToSRT(data.segments);
+      if (requestedFormat === 'vtt') return segmentsToVTT(data.segments);
+    }
+
+    // Fallback to text field
+    if (data && typeof data === 'object' && 'text' in data) {
+      // Check if text already looks like SRT (some providers return it as string in text field)
+      const text = data.text;
+      if (requestedFormat === 'srt' && !text.includes('-->') && text.trim().length > 0) {
+        // It's pure text but they wanted SRT. We'll let the next step in UI handle formatting
+        // or just return as is.
+      }
+      return text;
+    }
+
     return JSON.stringify(data, null, 2);
   } catch (err) {
-    // If it's vtt, srt, or plain text, return exactly what we got
     return rawText;
   }
 };
-
