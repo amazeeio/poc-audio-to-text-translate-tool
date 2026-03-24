@@ -55,14 +55,7 @@ export const transcribeAudio = async (
   formData.append('diarize', diarize.toString());
   timestampGranularities.forEach(g => formData.append('timestamp_granularities[]', g));
   
-  // If user wants srt/vtt, we request verbose_json to ensure we get timings
-  // then we convert it ourselves if the provider doesn't return raw srt/vtt.
-  const requestedFormat = responseFormat;
-  const apiResponseFormat = (requestedFormat === 'srt' || requestedFormat === 'vtt') 
-    ? 'verbose_json' 
-    : requestedFormat;
-    
-  formData.append('response_format', apiResponseFormat);
+  formData.append('response_format', responseFormat);
 
   if (sourceLanguage) {
     formData.append('language', sourceLanguage);
@@ -96,21 +89,21 @@ export const transcribeAudio = async (
   try {
     const data = JSON.parse(rawText);
 
-    if (requestedFormat === 'json' || requestedFormat === 'verbose_json') {
+    if (responseFormat === 'json' || responseFormat === 'verbose_json') {
       return JSON.stringify(data, null, 2);
     }
 
     // Handle segments to SRT/VTT conversion if we have them
     if (data.segments && Array.isArray(data.segments)) {
-      if (requestedFormat === 'srt') return segmentsToSRT(data.segments);
-      if (requestedFormat === 'vtt') return segmentsToVTT(data.segments);
+      if (responseFormat === 'srt') return segmentsToSRT(data.segments);
+      if (responseFormat === 'vtt') return segmentsToVTT(data.segments);
     }
 
     // Fallback to text field
     if (data && typeof data === 'object' && 'text' in data) {
       // Check if text already looks like SRT (some providers return it as string in text field)
       const text = data.text;
-      if (requestedFormat === 'srt' && !text.includes('-->') && text.trim().length > 0) {
+      if (responseFormat === 'srt' && !text.includes('-->') && text.trim().length > 0) {
         // It's pure text but they wanted SRT. We'll let the next step in UI handle formatting
         // or just return as is.
       }

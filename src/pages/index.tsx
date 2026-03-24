@@ -56,7 +56,7 @@ const IndexPage = () => {
   -H "Authorization: Bearer [GATSBY_LITELLM_API_KEY]" \\
   -F "file=@${file.name}" \\
   -F "model=${transcribeModel}" \\
-  -F "response_format=${responseFormat === 'srt' || responseFormat === 'vtt' ? 'verbose_json' : responseFormat}" \\
+  -F "response_format=${responseFormat}" \\
   -F "diarize=${diarize}" \\
   ${timestampGranularity.map(g => `-F "timestamp_granularities[]=${g}"`).join(' \\\n  ')} \\
   ${sourceLang ? `-F "language=${sourceLang}"` : ''}`;
