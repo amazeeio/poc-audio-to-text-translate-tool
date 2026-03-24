@@ -33,7 +33,9 @@ export const transcribeAudio = async (
   file: File,
   sourceLanguage: string,
   model: string = 'gpt-4o-transcribe',
-  responseFormat: string = 'json'
+  responseFormat: string = 'json',
+  diarize: boolean = false,
+  timestampGranularities: ('segment' | 'word')[] = ['segment']
 ): Promise<string> => {
   if (process.env.GATSBY_USE_LOCAL_OLLAMA === 'true') {
     console.log('Using local Ollama fallback for transcription');
@@ -48,6 +50,10 @@ export const transcribeAudio = async (
   const formData = new FormData();
   formData.append('file', file);
   formData.append('model', model);
+  
+  // diarize and timestamp_granularities support
+  formData.append('diarize', diarize.toString());
+  timestampGranularities.forEach(g => formData.append('timestamp_granularities[]', g));
   
   // If user wants srt/vtt, we request verbose_json to ensure we get timings
   // then we convert it ourselves if the provider doesn't return raw srt/vtt.
