@@ -86,30 +86,15 @@ export const transcribeAudio = async (
 
   const rawText = await response.text();
 
+  // If the user requested a non-JSON format, return the raw text directly.
+  // This avoids "fake" SRT/VTT generation and lets the user see if the API 
+  // actually honored the response_format=srt/vtt request.
+  if (responseFormat === 'srt' || responseFormat === 'vtt' || responseFormat === 'text') {
+    return rawText;
+  }
+
   try {
     const data = JSON.parse(rawText);
-
-    if (responseFormat === 'json' || responseFormat === 'verbose_json') {
-      return JSON.stringify(data, null, 2);
-    }
-
-    // Handle segments to SRT/VTT conversion if we have them
-    if (data.segments && Array.isArray(data.segments)) {
-      if (responseFormat === 'srt') return segmentsToSRT(data.segments);
-      if (responseFormat === 'vtt') return segmentsToVTT(data.segments);
-    }
-
-    // Fallback to text field
-    if (data && typeof data === 'object' && 'text' in data) {
-      // Check if text already looks like SRT (some providers return it as string in text field)
-      const text = data.text;
-      if (responseFormat === 'srt' && !text.includes('-->') && text.trim().length > 0) {
-        // It's pure text but they wanted SRT. We'll let the next step in UI handle formatting
-        // or just return as is.
-      }
-      return text;
-    }
-
     return JSON.stringify(data, null, 2);
   } catch (err) {
     return rawText;

@@ -61,25 +61,34 @@ export const translateText = async (
   }
 
   // Use relative URL to leverage Gatsby proxy for POST to /v1/chat/completions
+  const body: any = {
+    model: model,
+    messages: [
+      {
+        role: 'system',
+        content: systemPrompt
+      },
+      {
+        role: 'user',
+        content: text
+      }
+    ]
+  };
+
+  // Note: We don't send response_format=srt/vtt here because chat completions 
+  // APIs generally don't support these as structured output types.
+  // We rely on the system prompt to guide the LLM to produce the correct format.
+  if (responseFormat === 'json' || responseFormat === 'verbose_json') {
+    body.response_format = { type: 'json_object' };
+  }
+
   const response = await fetch('/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model: model,
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt
-        },
-        {
-          role: 'user',
-          content: text
-        }
-      ]
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {

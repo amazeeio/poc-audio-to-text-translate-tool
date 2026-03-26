@@ -67,18 +67,26 @@ const IndexPage = () => {
       // Step 1: Transcribe Audio
       setIsTranscribing(true);
       let transcribedText = await transcribeAudio(file, sourceLang, transcribeModel, responseFormat, diarize, timestampGranularity);
-
-      // Step 1.1: If srt/vtt was requested but the model returned plain text,
-      // use the chat model to "format" it into SRT/VTT for consistency.
-      if ((responseFormat === 'srt' || responseFormat === 'vtt') && !transcribedText.includes('-->')) {
-        transcribedText = await formatTextAsSubtitles(transcribedText, responseFormat, chatModel);
-      }
-
       setTranscription(transcribedText);
       setIsTranscribing(false);
 
       // Step 2: Translate Text
       setIsTranslating(true);
+      
+      // Construct a representation of the curl request for translation
+      const translateCurl = `curl -X POST "https://llm.us104.amazee.ai/v1/chat/completions" \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer [GATSBY_LITELLM_API_KEY]" \\
+  -d '{
+    "model": "${chatModel}",
+    "messages": [
+      {"role": "system", "content": "..." },
+      {"role": "user", "content": "..." }
+    ]${['json', 'verbose_json'].includes(responseFormat) ? ',\n    "response_format": {"type": "json_object"}' : ''}
+  }'`;
+      
+      setLastCurlRequest(prev => prev + '\n\n' + translateCurl);
+
       const translatedText = await translateText(transcribedText, targetLang, chatModel, responseFormat);
       setTranslation(translatedText);
       setIsTranslating(false);
