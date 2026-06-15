@@ -36,6 +36,7 @@ const IndexPage = () => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [error, setError] = useState<string>('');
   const [lastCurlRequest, setLastCurlRequest] = useState<string>('');
+  const [isCurlExpanded, setIsCurlExpanded] = useState<boolean>(true);
 
   const handleProcess = async () => {
     if (!file) {
@@ -62,6 +63,7 @@ const IndexPage = () => {
   ${sourceLang ? `-F "language=${sourceLang}"` : ''}`;
     
     setLastCurlRequest(curlCommand);
+    setIsCurlExpanded(true);
 
     try {
       // Step 1: Transcribe Audio
@@ -114,23 +116,50 @@ const IndexPage = () => {
         {lastCurlRequest && (
           <div className="mb-6 w-full animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <button
+                onClick={() => setIsCurlExpanded(!isCurlExpanded)}
+                className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5 hover:text-gray-700 transition-colors focus:outline-none cursor-pointer"
+                title={isCurlExpanded ? "Collapse" : "Expand"}
+              >
+                <svg
+                  className={`h-3 w-3 transform transition-transform duration-200 ${
+                    isCurlExpanded ? 'rotate-90' : ''
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 Last Request (cURL)
-              </span>
-              <button 
-                onClick={() => setLastCurlRequest('')}
-                className="text-xs text-gray-400 hover:text-gray-600 underline"
-              >
-                Clear
               </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsCurlExpanded(!isCurlExpanded)}
+                  className="text-xs text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  {isCurlExpanded ? 'Hide' : 'Show'}
+                </button>
+                <span className="text-gray-300 text-xs">|</span>
+                <button 
+                  onClick={() => setLastCurlRequest('')}
+                  className="text-xs text-gray-400 hover:text-gray-600 underline cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
-            <div className="bg-gray-900 rounded-lg p-4 shadow-inner overflow-x-auto border border-gray-700">
-              <pre className="text-[11px] font-mono text-green-400 leading-relaxed whitespace-pre">
-                {lastCurlRequest}
-              </pre>
+            <div className={`transition-all duration-200 overflow-hidden ${
+              isCurlExpanded ? 'max-h-[1000px] opacity-100 mt-1' : 'max-h-0 opacity-0'
+            }`}>
+              <div className="bg-gray-900 rounded-lg p-4 shadow-inner overflow-x-auto border border-gray-700">
+                <pre className="text-[11px] font-mono text-green-400 leading-relaxed whitespace-pre">
+                  {lastCurlRequest}
+                </pre>
+              </div>
             </div>
           </div>
         )}
