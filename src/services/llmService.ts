@@ -1,34 +1,5 @@
 import { transcribeAudioWithOllama } from './localOllamaService';
 
-const formatTime = (seconds: number, type: 'srt' | 'vtt'): string => {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  const ms = Math.floor((seconds % 1) * 1000);
-  
-  const hDisplay = h.toString().padStart(2, '0');
-  const mDisplay = m.toString().padStart(2, '0');
-  const sDisplay = s.toString().padStart(2, '0');
-  const msDisplay = ms.toString().padStart(3, '0');
-  
-  if (type === 'srt') {
-    return `${hDisplay}:${mDisplay}:${sDisplay},${msDisplay}`;
-  }
-  return `${hDisplay}:${mDisplay}:${sDisplay}.${msDisplay}`;
-};
-
-const segmentsToSRT = (segments: any[]): string => {
-  return segments.map((seg, i) => {
-    return `${i + 1}\n${formatTime(seg.start, 'srt')} --> ${formatTime(seg.end, 'srt')}\n${seg.text.trim()}\n`;
-  }).join('\n');
-};
-
-const segmentsToVTT = (segments: any[]): string => {
-  return 'WEBVTT\n\n' + segments.map((seg) => {
-    return `${formatTime(seg.start, 'vtt')} --> ${formatTime(seg.end, 'vtt')}\n${seg.text.trim()}\n`;
-  }).join('\n');
-};
-
 export const transcribeAudio = async (
   file: File,
   sourceLanguage: string,

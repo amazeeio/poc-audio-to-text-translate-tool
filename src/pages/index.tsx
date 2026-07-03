@@ -5,7 +5,7 @@ import { FileUpload } from '../components/FileUpload';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { TranslationResult } from '../components/TranslationResult';
 import { transcribeAudio } from '../services/llmService';
-import { translateText, formatTextAsSubtitles } from '../services/translateService';
+import { translateText } from '../services/translateService';
 
 const languageOptions = [
   { code: 'ar', name: 'Arabic (العربية)' },
