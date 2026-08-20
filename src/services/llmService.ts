@@ -22,10 +22,16 @@ export const transcribeAudio = async (
   formData.append('file', file);
   formData.append('model', model);
   
-  // diarize and timestamp_granularities support
-  formData.append('diarize', diarize.toString());
-  timestampGranularities.forEach(g => formData.append('timestamp_granularities[]', g));
-  
+  // Only send optional params when they apply, so the request tests exactly
+  // what was selected. timestamp_granularities is only valid with
+  // response_format=verbose_json per the transcription API.
+  if (diarize) {
+    formData.append('diarize', 'true');
+  }
+  if (responseFormat === 'verbose_json') {
+    timestampGranularities.forEach(g => formData.append('timestamp_granularities[]', g));
+  }
+
   formData.append('response_format', responseFormat);
 
   if (sourceLanguage) {
