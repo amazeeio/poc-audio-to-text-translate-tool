@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { validateSubtitle, SubtitleFormat } from '../services/subtitle';
+
 interface TranslationResultProps {
   transcription: string;
   translation: string;
@@ -7,7 +9,44 @@ interface TranslationResultProps {
   isTranslating: boolean;
   transcribeModel: string;
   translateModel: string;
+  responseFormat: string;
 }
+
+const downloadText = (text: string, filename: string) => {
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const SubtitleTools: React.FC<{ content: string; format: SubtitleFormat; filename: string }> = ({
+  content,
+  format,
+  filename,
+}) => {
+  const error = validateSubtitle(content, format);
+  return (
+    <div className="mt-2 flex items-center gap-3 text-xs">
+      {error ? (
+        <span className="px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200" title={error}>
+          ✗ Invalid {format.toUpperCase()}: {error}
+        </span>
+      ) : (
+        <span className="px-2 py-0.5 rounded bg-green-100 text-green-800 border border-green-200">
+          ✓ Valid {format.toUpperCase()}
+        </span>
+      )}
+      <button
+        onClick={() => downloadText(content, filename)}
+        className="underline text-indigo-600 hover:text-indigo-800 cursor-pointer"
+      >
+        Download .{format}
+      </button>
+    </div>
+  );
+};
 
 export const TranslationResult: React.FC<TranslationResultProps> = ({
   transcription,
@@ -16,7 +55,10 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
   isTranslating,
   transcribeModel,
   translateModel,
+  responseFormat,
 }) => {
+  const subtitleFormat =
+    responseFormat === 'srt' || responseFormat === 'vtt' ? (responseFormat as SubtitleFormat) : null;
 
   return (
     <div className="w-full space-y-6 grid grid-cols-2 gap-6">
@@ -33,6 +75,13 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
             )}
           </h3>
           <p className="mt-1 max-w-2xl text-sm text-gray-500">Transcribed via "{transcribeModel}" model.</p>
+          {subtitleFormat && transcription && !isTranscribing && (
+            <SubtitleTools
+              content={transcription}
+              format={subtitleFormat}
+              filename={`transcription.${subtitleFormat}`}
+            />
+          )}
         </div>
         <div className="px-4 py-5 sm:p-6 text-gray-800 whitespace-pre-wrap min-h-[100px]">
           {isTranscribing ? (
@@ -59,6 +108,13 @@ export const TranslationResult: React.FC<TranslationResultProps> = ({
             )}
           </h3>
           <p className="mt-1 max-w-2xl text-sm text-indigo-500">Target language text result via "{translateModel}" model.</p>
+          {subtitleFormat && translation && !isTranslating && (
+            <SubtitleTools
+              content={translation}
+              format={subtitleFormat}
+              filename={`translation.${subtitleFormat}`}
+            />
+          )}
         </div>
         <div className="px-4 py-5 sm:p-6 text-gray-800 whitespace-pre-wrap min-h-[100px]">
           {isTranslating ? (

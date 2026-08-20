@@ -52,15 +52,21 @@ const IndexPage = () => {
     setTranscription('');
     setTranslation('');
 
-    // Construct a representation of the curl request for transparency
-    const curlCommand = `curl -X POST "https://llm.us104.amazee.ai/v1/audio/transcriptions" \\
-  -H "Authorization: Bearer [GATSBY_LITELLM_API_KEY]" \\
-  -F "file=@${file.name}" \\
-  -F "model=${transcribeModel}" \\
-  -F "response_format=${responseFormat}" \\
-  -F "diarize=${diarize}" \\
-  ${timestampGranularity.map(g => `-F "timestamp_granularities[]=${g}"`).join(' \\\n  ')} \\
-  ${sourceLang ? `-F "language=${sourceLang}"` : ''}`;
+    // Construct a representation of the curl request for transparency.
+    // Mirrors llmService.ts: optional params only included when they apply.
+    const apiBase = process.env.GATSBY_LITELLM_API_URL || 'https://llm.us104.amazee.ai';
+    const curlCommand = [
+      `curl -X POST "${apiBase}/v1/audio/transcriptions"`,
+      `-H "Authorization: Bearer [GATSBY_LITELLM_API_KEY]"`,
+      `-F "file=@${file.name}"`,
+      `-F "model=${transcribeModel}"`,
+      ...(diarize ? [`-F "diarize=true"`] : []),
+      ...(responseFormat === 'verbose_json'
+        ? timestampGranularity.map(g => `-F "timestamp_granularities[]=${g}"`)
+        : []),
+      `-F "response_format=${responseFormat}"`,
+      ...(sourceLang ? [`-F "language=${sourceLang}"`] : []),
+    ].join(' \\\n  ');
     
     setLastCurlRequest(curlCommand);
     setIsCurlExpanded(true);
@@ -76,7 +82,7 @@ const IndexPage = () => {
       setIsTranslating(true);
       
       // Construct a representation of the curl request for translation
-      const translateCurl = `curl -X POST "https://llm.us104.amazee.ai/v1/chat/completions" \\
+      const translateCurl = `curl -X POST "${apiBase}/v1/chat/completions" \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer [GATSBY_LITELLM_API_KEY]" \\
   -d '{
@@ -248,7 +254,7 @@ const IndexPage = () => {
                   onChange={(e) => setChatModel(e.target.value)}
                 >
                   <option value="chat">chat</option>
-                  <option value="claude-4-5-sonnet">claude-4-5-sonnet</option>
+                  <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
                 </select>
               </div>
 
@@ -360,6 +366,7 @@ const IndexPage = () => {
               isTranslating={isTranslating}
               transcribeModel={transcribeModel}
               translateModel={chatModel}
+              responseFormat={responseFormat}
             />
           </div>
         </div>
