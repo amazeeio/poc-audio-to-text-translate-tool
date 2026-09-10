@@ -6,6 +6,8 @@ import { LanguageSelector } from '../components/LanguageSelector';
 import { TranslationResult } from '../components/TranslationResult';
 import { transcribeAudio } from '../services/llmService';
 import { translateText } from '../services/translateService';
+import { SonioxOptionsPanel } from '../components/SonioxOptionsPanel';
+import { buildSonioxFormFields, defaultSonioxOptions, isSonioxModel, SonioxOptions } from '../services/soniox';
 
 const languageOptions = [
   { code: 'ar', name: 'Arabic (العربية)' },
@@ -28,6 +30,11 @@ const IndexPage = () => {
   const [responseFormat, setResponseFormat] = useState<string>('json');
   const [diarize, setDiarize] = useState<boolean>(false);
   const [timestampGranularity, setTimestampGranularity] = useState<('segment' | 'word')[]>(['segment']);
+  const [sonioxOptions, setSonioxOptions] = useState<SonioxOptions>(defaultSonioxOptions);
+  const isSoniox = isSonioxModel(transcribeModel);
+  // Soniox has its own diarization flag, so the generic `diarize` field is not sent to it.
+  const sendDiarize = diarize && !isSoniox;
+  const sonioxFields = isSoniox ? buildSonioxFormFields(sonioxOptions) : [];
 
   const [transcription, setTranscription] = useState<string>('');
   const [translation, setTranslation] = useState<string>('');
@@ -60,12 +67,13 @@ const IndexPage = () => {
       `-H "Authorization: Bearer [GATSBY_LITELLM_API_KEY]"`,
       `-F "file=@${file.name}"`,
       `-F "model=${transcribeModel}"`,
-      ...(diarize ? [`-F "diarize=true"`] : []),
+      ...(sendDiarize ? [`-F "diarize=true"`] : []),
       ...(responseFormat === 'verbose_json'
         ? timestampGranularity.map(g => `-F "timestamp_granularities[]=${g}"`)
         : []),
       `-F "response_format=${responseFormat}"`,
       ...(sourceLang ? [`-F "language=${sourceLang}"`] : []),
+      ...sonioxFields.map(([name, value]) => `-F '${name}=${value}'`),
     ].join(' \\\n  ');
     
     setLastCurlRequest(curlCommand);
@@ -74,7 +82,7 @@ const IndexPage = () => {
     try {
       // Step 1: Transcribe Audio
       setIsTranscribing(true);
-      let transcribedText = await transcribeAudio(file, sourceLang, transcribeModel, responseFormat, diarize, timestampGranularity);
+      let transcribedText = await transcribeAudio(file, sourceLang, transcribeModel, responseFormat, sendDiarize, timestampGranularity, sonioxFields);
       setTranscription(transcribedText);
       setIsTranscribing(false);
 
@@ -340,6 +348,15 @@ const IndexPage = () => {
                 )}
               </div>
             </div>
+
+            {isSoniox && (
+              <SonioxOptionsPanel
+                options={sonioxOptions}
+                onChange={setSonioxOptions}
+                sourceLang={sourceLang}
+                targetLang={targetLang}
+              />
+            )}
 
             <div className="pt-4">
               <button

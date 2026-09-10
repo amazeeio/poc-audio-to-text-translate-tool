@@ -6,7 +6,8 @@ export const transcribeAudio = async (
   model: string = 'gpt-4o-transcribe',
   responseFormat: string = 'json',
   diarize: boolean = false,
-  timestampGranularities: ('segment' | 'word')[] = ['segment']
+  timestampGranularities: ('segment' | 'word')[] = ['segment'],
+  extraFields: [string, string][] = []
 ): Promise<string> => {
   if (process.env.GATSBY_USE_LOCAL_OLLAMA === 'true') {
     console.log('Using local Ollama fallback for transcription');
@@ -37,6 +38,7 @@ export const transcribeAudio = async (
   if (sourceLanguage) {
     formData.append('language', sourceLanguage);
   }
+  extraFields.forEach(([name, value]) => formData.append(name, value));
 
   const response = await fetch('/v1/audio/transcriptions', {
     method: 'POST',
