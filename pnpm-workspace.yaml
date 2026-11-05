@@ -10,3 +10,16 @@ allowBuilds:
   sharp: true
 onlyBuiltDependencies:
   - gatsby
+# Security floors for transitive deps that Gatsby 5 pins to old versions (Dependabot alerts).
+# Not overridden: file-type, decode-uri-component (fixes are ESM-only), @parcel/* (must match Gatsby's
+# parcel version), braces and deepmerge (no fix released).
+overrides:
+  cookie@<0.7.0: ^0.7.2
+  immutable@<3.8.4: ^3.8.4
+  lodash@<4.18.0: ^4.18.1
+  path-to-regexp@<0.1.13: 0.1.13
+  serialize-javascript@<7.0.5: ^7.0.5
+  sharp@<0.35.4: ^0.35.4
+  tmp@<0.2.6: ^0.2.7
+  uuid@<11.1.1: ^11.1.1
+  webpack@<5.104.1: ^5.104.1
