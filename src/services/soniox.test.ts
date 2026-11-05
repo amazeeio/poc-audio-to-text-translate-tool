@@ -31,8 +31,8 @@ test('language hints, flags and translation map to their form fields', () => {
     languageHintsStrict: true,
     languageIdentification: true,
     speakerDiarization: true,
-    translateTo: 'de',
-  });
+    translation: 'one_way',
+  }, 'ru', 'de');
   assert.deepEqual(fields, [
     ['language_hints[]', 'en'],
     ['language_hints[]', 'es'],
@@ -46,4 +46,17 @@ test('language hints, flags and translation map to their form fields', () => {
 test('strict flag is dropped without hints', () => {
   const fields = buildSonioxFormFields({ ...defaultSonioxOptions, languageHintsStrict: true });
   assert.deepEqual(fields, []);
+});
+
+test('two_way translation pairs source and target languages', () => {
+  const fields = buildSonioxFormFields({ ...defaultSonioxOptions, translation: 'two_way' }, 'en', 'es');
+  assert.deepEqual(fields, [['translation', JSON.stringify({ type: 'two_way', language_a: 'en', language_b: 'es' })]]);
+});
+
+test('polling settings are sent for the LiteLLM handler', () => {
+  const fields = buildSonioxFormFields({ ...defaultSonioxOptions, pollingInterval: ' 2 ', maxPollingAttempts: '600' });
+  assert.deepEqual(fields, [
+    ['soniox_polling_interval', '2'],
+    ['soniox_max_polling_attempts', '600'],
+  ]);
 });

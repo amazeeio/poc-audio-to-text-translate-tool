@@ -73,12 +73,42 @@ export const SonioxOptionsPanel: React.FC<Props> = ({ options, onChange, sourceL
         </Field>
       </div>
 
-      <Toggle
-        id="soniox-translate"
-        label={`Translate inside Soniox to "${targetLang}" (one_way)`}
-        checked={options.translateTo !== ''}
-        onChange={(v) => set('translateTo', v ? targetLang : '')}
-      />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Field id="soniox-translation" label="Translate inside Soniox" hint="Uses the source and target languages above">
+          <select
+            id="soniox-translation"
+            className={inputClass}
+            value={options.translation}
+            onChange={(e) => set('translation', e.target.value as SonioxOptions['translation'])}
+          >
+            <option value="">Off</option>
+            <option value="one_way">one_way: all speech to {targetLang}</option>
+            <option value="two_way">two_way: {sourceLang} ⇄ {targetLang}</option>
+          </select>
+        </Field>
+        <Field id="soniox-polling-interval" label="Polling interval (s)" hint="LiteLLM default if empty">
+          <input
+            id="soniox-polling-interval"
+            type="number"
+            min="0"
+            step="0.5"
+            className={inputClass}
+            value={options.pollingInterval}
+            onChange={(e) => set('pollingInterval', e.target.value)}
+          />
+        </Field>
+        <Field id="soniox-max-polling-attempts" label="Max polling attempts" hint="Raise for long audio files">
+          <input
+            id="soniox-max-polling-attempts"
+            type="number"
+            min="1"
+            step="1"
+            className={inputClass}
+            value={options.maxPollingAttempts}
+            onChange={(e) => set('maxPollingAttempts', e.target.value)}
+          />
+        </Field>
+      </div>
     </fieldset>
   );
 };

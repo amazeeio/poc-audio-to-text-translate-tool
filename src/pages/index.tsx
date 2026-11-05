@@ -34,7 +34,7 @@ const IndexPage = () => {
   const isSoniox = isSonioxModel(transcribeModel);
   // Soniox has its own diarization flag, so the generic `diarize` field is not sent to it.
   const sendDiarize = diarize && !isSoniox;
-  const sonioxFields = isSoniox ? buildSonioxFormFields(sonioxOptions) : [];
+  const sonioxFields = isSoniox ? buildSonioxFormFields(sonioxOptions, sourceLang, targetLang) : [];
 
   const [transcription, setTranscription] = useState<string>('');
   const [translation, setTranslation] = useState<string>('');

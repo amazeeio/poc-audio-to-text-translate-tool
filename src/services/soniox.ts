@@ -9,7 +9,9 @@ export interface SonioxOptions {
   contextText: string;
   contextTerms: string;
   contextTranslationTerms: string;
-  translateTo: string;
+  translation: '' | 'one_way' | 'two_way';
+  pollingInterval: string;
+  maxPollingAttempts: string;
 }
 
 export const defaultSonioxOptions: SonioxOptions = {
@@ -21,7 +23,9 @@ export const defaultSonioxOptions: SonioxOptions = {
   contextText: '',
   contextTerms: '',
   contextTranslationTerms: '',
-  translateTo: '',
+  translation: '',
+  pollingInterval: '',
+  maxPollingAttempts: '',
 };
 
 export const isSonioxModel = (model: string): boolean => model.startsWith('stt-');
@@ -50,18 +54,29 @@ export const buildSonioxContext = (o: SonioxOptions): Record<string, unknown> | 
   return Object.keys(context).length ? context : null;
 };
 
+// one_way translates everything into `target`; two_way translates between the source and target languages.
+const buildTranslation = (o: SonioxOptions, source: string, target: string): Record<string, string> | null => {
+  if (o.translation === 'one_way' && target) return { type: 'one_way', target_language: target };
+  if (o.translation === 'two_way' && source && target) return { type: 'two_way', language_a: source, language_b: target };
+  return null;
+};
+
 // Form fields as [name, value] pairs, used both for the FormData body and the curl preview.
-export const buildSonioxFormFields = (o: SonioxOptions): [string, string][] => {
+// soniox_polling_* are read by the LiteLLM handler (>= 1.108) and are not sent on to Soniox.
+export const buildSonioxFormFields = (o: SonioxOptions, source = '', target = ''): [string, string][] => {
   const hints = splitList(o.languageHints);
   const context = buildSonioxContext(o);
+  const translation = buildTranslation(o, source, target);
+  const pollingInterval = o.pollingInterval.trim();
+  const maxPollingAttempts = o.maxPollingAttempts.trim();
   return [
     ...hints.map((h): [string, string] => ['language_hints[]', h]),
     ...(o.languageHintsStrict && hints.length ? [['language_hints_strict', 'true'] as [string, string]] : []),
     ...(o.languageIdentification ? [['enable_language_identification', 'true'] as [string, string]] : []),
     ...(o.speakerDiarization ? [['enable_speaker_diarization', 'true'] as [string, string]] : []),
     ...(context ? [['context', JSON.stringify(context)] as [string, string]] : []),
-    ...(o.translateTo
-      ? [['translation', JSON.stringify({ type: 'one_way', target_language: o.translateTo })] as [string, string]]
-      : []),
+    ...(translation ? [['translation', JSON.stringify(translation)] as [string, string]] : []),
+    ...(pollingInterval ? [['soniox_polling_interval', pollingInterval] as [string, string]] : []),
+    ...(maxPollingAttempts ? [['soniox_max_polling_attempts', maxPollingAttempts] as [string, string]] : []),
   ];
 };
