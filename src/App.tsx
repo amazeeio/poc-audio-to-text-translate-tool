@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import type { HeadFC } from 'gatsby';
 
-import { FileUpload } from '../components/FileUpload';
-import { LanguageSelector } from '../components/LanguageSelector';
-import { TranslationResult } from '../components/TranslationResult';
-import { transcribeAudio } from '../services/llmService';
-import { translateText } from '../services/translateService';
-import { SonioxOptionsPanel } from '../components/SonioxOptionsPanel';
-import { buildSonioxFormFields, defaultSonioxOptions, isSonioxModel, SonioxOptions } from '../services/soniox';
+import { FileUpload } from './components/FileUpload';
+import { LanguageSelector } from './components/LanguageSelector';
+import { TranslationResult } from './components/TranslationResult';
+import { transcribeAudio } from './services/llmService';
+import { translateText } from './services/translateService';
+import { SonioxOptionsPanel } from './components/SonioxOptionsPanel';
+import { buildSonioxFormFields, defaultSonioxOptions, isSonioxModel, SonioxOptions } from './services/soniox';
 
 const languageOptions = [
   { code: 'ar', name: 'Arabic (العربية)' },
@@ -61,10 +60,10 @@ const IndexPage = () => {
 
     // Construct a representation of the curl request for transparency.
     // Mirrors llmService.ts: optional params only included when they apply.
-    const apiBase = process.env.GATSBY_LITELLM_API_URL || 'https://llm.us104.amazee.ai';
+    const apiBase = import.meta.env.VITE_LITELLM_API_URL || 'https://llm.us104.amazee.ai';
     const curlCommand = [
       `curl -X POST "${apiBase}/v1/audio/transcriptions"`,
-      `-H "Authorization: Bearer [GATSBY_LITELLM_API_KEY]"`,
+      `-H "Authorization: Bearer [VITE_LITELLM_API_KEY]"`,
       `-F "file=@${file.name}"`,
       `-F "model=${transcribeModel}"`,
       ...(sendDiarize ? [`-F "diarize=true"`] : []),
@@ -92,7 +91,7 @@ const IndexPage = () => {
       // Construct a representation of the curl request for translation
       const translateCurl = `curl -X POST "${apiBase}/v1/chat/completions" \\
   -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer [GATSBY_LITELLM_API_KEY]" \\
+  -H "Authorization: Bearer [VITE_LITELLM_API_KEY]" \\
   -d '{
     "model": "${chatModel}",
     "messages": [
@@ -394,4 +393,3 @@ const IndexPage = () => {
 
 export default IndexPage;
 
-export const Head: HeadFC = () => <title>Audio Translator</title>;
