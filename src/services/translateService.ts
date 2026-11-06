@@ -40,14 +40,14 @@ export const translateText = async (
   model: string = 'chat',
   responseFormat: string = 'json'
 ): Promise<string> => {
-  if (process.env.GATSBY_USE_LOCAL_OLLAMA === 'true') {
+  if (import.meta.env.VITE_USE_LOCAL_OLLAMA === 'true') {
     console.log('Using local Ollama fallback for translation');
     return translateTextWithOllama(text, targetLanguage, 'chat', responseFormat);
   }
 
-  const apiKey = process.env.GATSBY_LITELLM_API_KEY;
+  const apiKey = import.meta.env.VITE_LITELLM_API_KEY;
   if (!apiKey) {
-    throw new Error('GATSBY_LITELLM_API_KEY is not defined in environment variables.');
+    throw new Error('VITE_LITELLM_API_KEY is not defined in environment variables.');
   }
 
   let systemPrompt = `You are a professional translator. Translate the text provided by the user into ${targetLanguage}. Provide only the translation without any additional commentary.`;
@@ -60,7 +60,7 @@ export const translateText = async (
     Provide only the translated ${responseFormat.toUpperCase()} content without any additional commentary.`;
   }
 
-  // Use relative URL to leverage Gatsby proxy for POST to /v1/chat/completions
+  // Use relative URL to leverage Vite dev proxy for POST to /v1/chat/completions
   const body: any = {
     model: model,
     messages: [

@@ -9,14 +9,14 @@ export const transcribeAudio = async (
   timestampGranularities: ('segment' | 'word')[] = ['segment'],
   extraFields: [string, string][] = []
 ): Promise<string> => {
-  if (process.env.GATSBY_USE_LOCAL_OLLAMA === 'true') {
+  if (import.meta.env.VITE_USE_LOCAL_OLLAMA === 'true') {
     console.log('Using local Ollama fallback for transcription');
     return transcribeAudioWithOllama(file, 'karanchopda333/whisper');
   }
 
-  const apiKey = process.env.GATSBY_LITELLM_API_KEY;
+  const apiKey = import.meta.env.VITE_LITELLM_API_KEY;
   if (!apiKey) {
-    throw new Error('GATSBY_LITELLM_API_KEY is not defined in environment variables.');
+    throw new Error('VITE_LITELLM_API_KEY is not defined in environment variables.');
   }
 
   const formData = new FormData();

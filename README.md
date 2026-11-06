@@ -10,15 +10,15 @@ The primary goal of this application is to test the LiteLLM endpoint for the **a
 
 To connect this application to the LiteLLM endpoint, you must provide the necessary API credentials and endpoint URL using environment variables.
 
-1. Create a `.env.development` file in the root of the project.
+1. Create a `.env.development` file (or `.env.local`) in the root of the project.
 2. Add your LLM URL and API Key to the file. For example:
 
 ```env
-GATSBY_LITELLM_API_URL="<your-litellm-endpoint-url>"
-GATSBY_LITELLM_API_KEY="<your-litellm-api-key>"
+VITE_LITELLM_API_URL="<your-litellm-endpoint-url>"
+VITE_LITELLM_API_KEY="<your-litellm-api-key>"
 ```
 
-*Note: Environment variables prefixed with `GATSBY_` will become available to the client-side code.*
+*Note: Environment variables prefixed with `VITE_` will become available to the client-side code.*
 
 ## Local Development
 
@@ -31,7 +31,7 @@ GATSBY_LITELLM_API_KEY="<your-litellm-api-key>"
 
 2. Start the development server:
    ```shell
-   pnpm run develop
+   pnpm dev
    ```
 
-3. Open the application in your browser (typically `http://localhost:8000`).
+3. Open the application in your browser at `http://localhost:8000`. Requests to `/v1/*` are proxied to `VITE_LITELLM_API_URL` (see `vite.config.ts`).
